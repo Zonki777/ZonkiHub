@@ -1,0 +1,182 @@
+# ZonkiHub
+Zonki Hub - Steal an Egg script
+local p = game:GetService("Players").LocalPlayer
+local w = game:GetService("Workspace")
+local r = game:GetService("ReplicatedStorage")
+local s = game:GetService("RunService")
+
+-- Clean duplicate interfaces instantly
+if game:GetService("CoreGui"):FindFirstChild("EggHub") then game:GetService("CoreGui").EggHub:Destroy() end
+
+-- 1. STYLED CORE HUD INTERFACE
+local g = Instance.new("ScreenGui")
+g.Name = "EggHub"
+g.ResetOnSpawn = false
+g.Parent = game:GetService("CoreGui")
+
+local m = Instance.new("Frame")
+m.Size = UDim2.new(0, 240, 0, 310)
+m.Position = UDim2.new(0.05, 0, 0.3, 0)
+m.BackgroundColor3 = Color3.fromRGB(15, 15, 18)
+m.Active = true
+m.Draggable = true
+m.Parent = g
+
+local c = Instance.new("UICorner")
+c.CornerRadius = UDim.new(0, 6)
+c.Parent = m
+
+local h = Instance.new("TextLabel")
+h.Size = UDim2.new(1, 0, 0, 40)
+h.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
+h.Text = "★ STEAL AN EGG CONTROL HUB ★"
+h.TextColor3 = Color3.fromRGB(255, 215, 0)
+h.Font = Enum.Font.RobotoMono
+h.TextSize = 13
+h.Parent = m
+local hc = Instance.new("UICorner")
+hc.CornerRadius = UDim.new(0, 6)
+hc.Parent = h
+
+-- Configuration State Tracker
+local state = {god = false, hit = false, speed = false, farm = false}
+
+local function addBtn(txt, y, callback)
+    local b = Instance.new("TextButton")
+    b.Size = UDim2.new(0.9, 0, 0, 40)
+    b.Position = UDim2.new(0.05, 0, 0, y)
+    b.BackgroundColor3 = Color3.fromRGB(28, 28, 35)
+    b.TextColor3 = Color3.fromRGB(240, 240, 240)
+    b.Font = Enum.Font.SourceSansBold
+    b.TextSize = 14
+    b.Text = txt .. " [OFF]"
+    b.Parent = m
+    local bc = Instance.new("UICorner")
+    bc.CornerRadius = UDim.new(0, 4)
+    bc.Parent = b
+    b.MouseButton1Click:Connect(function() callback(b) end)
+end
+
+-- 2. LIVE CODE MODIFICATIONS
+
+-- GODMODE SYSTEM
+addBtn("🛡️ Character Godmode", 55, function(b)
+    state.god = not state.god
+    if state.god then
+        b.Text = "🛡️ Character Godmode [ON]"
+        b.BackgroundColor3 = Color3.fromRGB(46, 139, 87)
+        task.spawn(function()
+            while state.god do
+                pcall(function()
+                    local hum = p.Character:FindFirstChildOfClass("Humanoid")
+                    if hum then
+                        hum.MaxHealth = math.huge
+                        hum.Health = math.huge
+                    end
+                end)
+                task.wait(0.1)
+            end
+        end)
+    else
+        b.Text = "🛡️ Character Godmode [OFF]"
+        b.BackgroundColor3 = Color3.fromRGB(28, 28, 35)
+        pcall(function() p.Character:FindFirstChildOfClass("Humanoid").Health = 100 end)
+    end
+end)
+
+-- ANTI-HIT ENGINE
+addBtn("🚫 Anti-Hit Traps & Stuns", 105, function(b)
+    state.hit = not state.hit
+    if state.hit then
+        b.Text = "🚫 Anti-Hit Traps & Stuns [ON]"
+        b.BackgroundColor3 = Color3.fromRGB(46, 139, 87)
+        task.spawn(function()
+            while state.hit do
+                pcall(function()
+                    -- Remove active stun values from character
+                    local status = p.Character:FindFirstChild("Status") or p:FindFirstChild("Status")
+                    if status and status:FindFirstChild("Ragdoll") then status.Ragdoll.Value = false end
+                    if status and status:FindFirstChild("Stunned") then status.Stunned.Value = false end
+                    
+                    -- Strip collision checks from dangerous objects
+                    for _, v in pairs(w:GetDescendants()) do
+                        if v:IsA("BasePart") and (v.Name:lower():find("trap") or v.Name:lower():find("hitbox") or v.Name:lower():find("kill")) then
+                            v.CanTouch = false
+                        end
+                    end
+                end)
+                task.wait(0.2)
+            end
+        end)
+    else
+        b.Text = "🚫 Anti-Hit Traps & Stuns [OFF]"
+        b.BackgroundColor3 = Color3.fromRGB(28, 28, 35)
+    end
+end)
+
+-- FAST SPEED HACK
+addBtn("⚡ Speed System Boost", 155, function(b)
+    state.speed = not state.speed
+    if state.speed then
+        b.Text = "⚡ Speed System Boost [ON]"
+        b.BackgroundColor3 = Color3.fromRGB(46, 139, 87)
+        task.spawn(function()
+            while state.speed do
+                pcall(function()
+                    p.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = 145
+                end)
+                s.PreRender:Wait()
+            end
+        end)
+    else
+        b.Text = "⚡ Speed System Boost [OFF]"
+        b.BackgroundColor3 = Color3.fromRGB(28, 28, 35)
+        pcall(function() p.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = 16 end)
+    end
+end)
+
+-- AUTO FARM ENGINE
+addBtn("🥚 Auto Farm Eggs Direct", 205, function(b)
+    state.farm = not state.farm
+    if state.farm then
+        b.Text = "🥚 Auto Farm Eggs Direct [ON]"
+        b.BackgroundColor3 = Color3.fromRGB(46, 139, 87)
+        task.spawn(function()
+            while state.farm do
+                pcall(function()
+                    local root = p.Character:FindFirstChild("HumanoidRootPart")
+                    if not root then return end
+                    
+                    for _, v in pairs(w:GetDescendants()) do
+                        if not state.farm then break end
+                        
+                        -- Checks active game item networks and models directly
+                        if v:IsA("BasePart") and (v.Name:lower():find("egg") or v.Parent.Name:lower():find("egg")) then
+                            local prompt = v:FindFirstChildOfClass("ProximityPrompt") or v.Parent:FindFirstChildOfClass("ProximityPrompt")
+                            if prompt then
+                                -- Direct hardware frame alignment
+                                root.CFrame = v.CFrame + Vector3.new(0, 1.5, 0)
+                                task.wait(0.05)
+                                
+                                -- Bypass holding timer completely using Delta integration
+                                if fireproximityprompt then
+                                    fireproximityprompt(prompt, 1)
+                                else
+                                    prompt:InputHoldBegin()
+                                    task.wait(0.05)
+                                    prompt:InputHoldEnd()
+                                end
+                                task.wait(0.25)
+                            end
+                        end
+                    end
+                end)
+                task.wait(0.2)
+            end
+        end)
+    else
+        b.Text = "🥚 Auto Farm Eggs Direct [OFF]"
+        b.BackgroundColor3 = Color3.fromRGB(28, 28, 35)
+    end
+end)
+       
